@@ -1,0 +1,10 @@
+__pycache__/
+input.txt
+output.html
+output.epub
+epub_html/
+example_epub/
+*.jpg
+input_markdown.txt
+.DS_Store
+output_markdown.txt
