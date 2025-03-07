@@ -57,6 +57,20 @@ pip install -r requirements.txt
 └── requirements.txt         # 필요한 패키지 목록
 ```
 
+
+resource/metadata.json 예시
+
+```json
+{
+  "title": "제목",
+  "creator": "작가",
+  "publisher": "출판사명",
+  "identifier": "979-11-1234-432-6",
+  "date": "2025-03-13",
+  "language": "ko"
+}
+```
+
 ## 문제 해결
 
 ### 목차(TOC) 링크 문제
