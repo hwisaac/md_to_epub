@@ -56,6 +56,36 @@ def convert_html_to_epub(html_dir, output_file, metadata=None):
             )
             book.add_item(style)
 
+        # 폰트 파일 추가
+        fonts_dir = html_path / "fonts"
+        if fonts_dir.exists():
+            for font_file in fonts_dir.glob("*"):
+                if font_file.is_file():
+                    font_name = font_file.name
+                    with open(font_file, "rb") as f:
+                        font_content = f.read()
+
+                    # 폰트 파일 확장자에 따른 MIME 타입 설정
+                    if font_name.endswith(".woff2"):
+                        media_type = "font/woff2"
+                    elif font_name.endswith(".woff"):
+                        media_type = "font/woff"
+                    elif font_name.endswith(".ttf"):
+                        media_type = "font/ttf"
+                    elif font_name.endswith(".otf"):
+                        media_type = "font/otf"
+                    else:
+                        media_type = "application/octet-stream"
+
+                    font_item = epub.EpubItem(
+                        uid=f"font_{font_name.replace('.', '_')}",
+                        file_name=f"fonts/{font_name}",
+                        media_type=media_type,
+                        content=font_content,
+                    )
+                    book.add_item(font_item)
+                    print(f"폰트 파일을 EPUB에 추가했습니다: {font_name}")
+
         # 표지 이미지 추가
         cover_file = html_path / "cover.jpg"
         if cover_file.exists():
@@ -121,6 +151,20 @@ def convert_html_to_epub(html_dir, output_file, metadata=None):
                 title_page.add_item(style)
             book.add_item(title_page)
             chapters.append(title_page)
+
+        # 판권 페이지 추가 (목차 이전에 추가)
+        colophon_html = html_path / "colophon.html"
+        if colophon_html.exists():
+            with open(colophon_html, "r", encoding="utf-8") as f:
+                colophon_content = f.read()
+
+            colophon_page = epub.EpubHtml(
+                title="판권", file_name="colophon.html", content=colophon_content
+            )
+            if css_file.exists():
+                colophon_page.add_item(style)
+            book.add_item(colophon_page)
+            chapters.append(colophon_page)
 
         # 목차 페이지 추가
         toc_html = html_path / "toc.html"
@@ -228,11 +272,13 @@ def convert_html_to_epub(html_dir, output_file, metadata=None):
 
         # 스파인 설정 (책의 페이지 순서)
         if cover_file.exists():
-            # 커버 페이지가 있는 경우: 커버 -> 목차 -> 내용
-            book.spine = [cover_page] + chapters[1:]
+            # 커버 페이지가 있는 경우: 커버 -> 제목 -> 판권 -> 목차 -> 내용
+            spine_items = chapters
         else:
             # 커버 페이지가 없는 경우: 기존 순서 유지
-            book.spine = chapters
+            spine_items = chapters
+
+        book.spine = spine_items
 
         # 네비게이션 파일 추가
         book.add_item(epub.EpubNcx())

@@ -19,6 +19,15 @@ def read_metadata(metadata_file):
     return metadata
 
 
+def read_colophon(colophon_file):
+    """
+    colophon.json 파일을 읽어 판권 정보를 가져옵니다.
+    """
+    with open(colophon_file, "r", encoding="utf-8") as f:
+        colophon = json.load(f)
+    return colophon
+
+
 def process_markdown_content(content_file):
     """
     마크다운 파일을 읽고 처리합니다.
@@ -149,73 +158,181 @@ def create_css():
     """
     스타일시트를 생성합니다.
     """
-    css = """body {
-    margin: 1em;
-    font-family: 'Noto Sans KR', sans-serif;
+    css = """
+@font-face {
+    font-family: 'Pretendard';
+    src: url('fonts/PretendardVariable.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+}
+
+body {
+    font-family: 'Pretendard', sans-serif;
+    margin: 5%;
+    text-align: justify;
     line-height: 1.6;
+}
+
+h1 {
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 1em;
+    color: #333;
+}
+
+h2 {
+    text-align: left;
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    color: #444;
+}
+
+h3 {
+    font-size: 1.1em;
+    margin-top: 0.8em;
+    color: #555;
+}
+
+h4, h5, h6 {
+    font-size: 1em;
+    margin-top: 0.6em;
+    color: #666;
+}
+
+p {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
 }
 
 .title-page {
     text-align: center;
-    margin: 3em auto;
 }
 
-.title {
+.title-page h1 {
+    margin-top: 30%;
     font-size: 2em;
-    margin-bottom: 1em;
 }
 
-.author {
-    font-size: 1.5em;
-    margin-bottom: 0.5em;
+.title-page .author {
+    margin-top: 3em;
+    font-style: italic;
 }
 
-.publisher {
-    font-size: 1.2em;
+.title-page .date {
+    margin-top: 1em;
+    font-size: 0.9em;
     color: #666;
 }
 
-.toc {
-    margin: 2em;
-}
-
-.toc ul {
-    list-style-type: none;
-    padding-left: 1em;
+.toc ol {
+    padding-left: 2em;
 }
 
 .toc li {
     margin-bottom: 0.5em;
 }
 
-.chapter {
-    margin: 1em;
+.toc a {
+    text-decoration: none;
+    color: #0066cc;
 }
 
-h1, h2, h3, h4, h5, h6 {
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
+.toc a:hover {
+    text-decoration: underline;
 }
 
-p {
-    margin-bottom: 1em;
-    text-indent: 1em;
+ul{
+    list-style-type: none;
 }
-
-/* 첫 번째 문단은 들여쓰기 없음 */
-h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p {
-    text-indent: 0;
-}
-
-strong, b {
-    font-weight: bold;
-}
-
-em, i {
-    font-style: italic;
+hr{
+  background-color: #fff;
+  padding: 0;
+  margin: 80px;
+  border: 0;
+  height: 1px;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
 }
 """
     return css
+
+
+def create_colophon_html(colophon):
+    """
+    판권 페이지 HTML을 생성합니다.
+    """
+    html = "<!DOCTYPE html>\n"
+    html += '<html xmlns="http://www.w3.org/1999/xhtml">\n'
+    html += "<head>\n"
+    html += '    <meta charset="UTF-8" />\n'
+    html += "    <title>판권</title>\n"
+    html += '    <link rel="stylesheet" type="text/css" href="style.css" />\n'
+    html += "</head>\n"
+    html += "<body>\n"
+    html += '    <div class="colophon">\n'
+
+    # 제목
+    if "title" in colophon:
+        html += f'        <h1>{colophon["title"]}</h1>\n'
+
+    # 초판 발행일
+    if "first_published" in colophon:
+        html += f'        <p><span class="label">초판 발행</span> {colophon["first_published"]}</p>\n'
+
+    # 저자
+    if "author" in colophon:
+        html += (
+            f'        <p><span class="label">지은이</span> {colophon["author"]}</p>\n'
+        )
+
+    # 번역자
+    if "translator" in colophon:
+        html += f'        <p><span class="label">옮긴이</span> {colophon["translator"]}</p>\n'
+
+    # 발행인
+    if "publisher" in colophon and "editor" in colophon["publisher"]:
+        html += f'        <p><span class="label">발행인</span> {colophon["publisher"]["editor"]}</p>\n'
+
+    # 출판사
+    if "publisher" in colophon and "name" in colophon["publisher"]:
+        html += f'        <p><span class="label">발행처</span> {colophon["publisher"]["name"]}</p>\n'
+
+    # 출판 등록 정보
+    if "publication_registration" in colophon:
+        reg = colophon["publication_registration"]
+        if "date" in reg and "number" in reg:
+            html += f'        <p><span class="label">출판등록</span> {reg["date"]} {reg["number"]}</p>\n'
+
+    # 주소
+    if "address" in colophon and "street" in colophon["address"]:
+        html += f'        <p><span class="label">주소</span> {colophon["address"]["street"]}</p>\n'
+
+    # 연락처
+    if "contact" in colophon:
+        contact = colophon["contact"]
+        email = contact["email"]
+        fax = contact["fax"]
+        html += f'        <p><span class="label">문의</span> {email}</p>\n'
+        html += f'        <p><span class="label">팩스</span> {fax}</p>\n'
+
+    # ISBN
+    if "isbn" in colophon:
+        html += f'        <p><span class="label">ISBN</span> {colophon["isbn"]}</p>\n'
+
+    # 가격
+    if "price" in colophon:
+        html += f'        <p><span class="label">정가</span> {colophon["price"]}</p>\n'
+    # 저작권 고지
+    if "copyright_notice" in colophon:
+        html += f'        <p>{colophon["copyright_notice"]}</p>\n'
+
+    html += "    </div>\n"
+    html += "</body>\n"
+    html += "</html>"
+
+    return html
 
 
 def extract_chapters(html_content):
@@ -249,6 +366,8 @@ def convert_resource_to_html(resource_dir, output_dir):
     content_file = resource_path / "content.md"
     cover_file = resource_path / "cover.jpg"
     css_file = resource_path / "style.css"
+    colophon_file = resource_path / "colophon.json"
+    fonts_dir = Path("fonts")
 
     # 출력 디렉토리 생성
     output_path = Path(output_dir)
@@ -275,6 +394,19 @@ def convert_resource_to_html(resource_dir, output_dir):
             f.write(create_css())
             print("기본 CSS 파일을 생성했습니다.")
 
+    # 폰트 폴더 복사
+    if fonts_dir.exists():
+        output_fonts_dir = output_path / "fonts"
+        output_fonts_dir.mkdir(exist_ok=True)
+
+        # 폰트 파일 복사
+        for font_file in fonts_dir.glob("*"):
+            if font_file.is_file():
+                shutil.copy(font_file, output_fonts_dir / font_file.name)
+                print(
+                    f"폰트 파일을 복사했습니다: {font_file} -> {output_fonts_dir / font_file.name}"
+                )
+
     # 표지 이미지 복사
     if cover_file.exists():
         shutil.copy(cover_file, output_path / "cover.jpg")
@@ -286,6 +418,13 @@ def convert_resource_to_html(resource_dir, output_dir):
     # 목차 페이지 생성
     with open(output_path / "toc.html", "w", encoding="utf-8") as f:
         f.write(create_toc_html(metadata, chapter_titles))
+
+    # 판권 페이지 생성
+    if colophon_file.exists():
+        colophon = read_colophon(colophon_file)
+        with open(output_path / "colophon.html", "w", encoding="utf-8") as f:
+            f.write(create_colophon_html(colophon))
+        print(f"판권 페이지를 생성했습니다: {output_path / 'colophon.html'}")
 
     # 각 챕터 HTML 파일 생성
     for i, (title, content) in enumerate(chapters):
