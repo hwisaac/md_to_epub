@@ -8,3 +8,5 @@ example_epub/
 input_markdown.txt
 .DS_Store
 output_markdown.txt
+resource/*
+*.epub

@@ -1,150 +1,89 @@
-# TXT to EPUB 변환기
+# EPUB 변환 도구
 
-이 프로젝트는 텍스트 파일을 HTML 또는 EPUB 파일로 변환하는 도구입니다.
+## 프로젝트 설명
+이 프로젝트는 마크다운(.md) 파일을 EPUB 형식으로 변환하는 도구입니다. 리소스 디렉토리에 있는 콘텐츠, 메타데이터, 스타일시트를 사용하여 EPUB 파일을 생성합니다.
+
+## 사용 방법
+
+### 리소스 디렉토리 구조
+```
+resource/
+  ├── content.md     # 책 내용 (마크다운 형식)
+  ├── metadata.json  # 책 메타데이터
+  ├── cover.jpg      # 표지 이미지 (선택 사항)
+  └── style.css      # 스타일시트 (선택 사항)
+```
+
+### 마크다운에서 HTML로 변환
+```bash
+python resource_to_html.py --resource-dir resource --output-dir output_html
+```
+
+### 마크다운에서 EPUB으로 변환
+```bash
+python resource_to_epub.py --resource-dir resource --output-file output.epub
+```
 
 ## 기능
+- 마크다운 형식의 콘텐츠를 HTML로 변환
+- HTML을 EPUB으로 변환
+- 목차 자동 생성
+- 챕터 분할 지원
+- 커스텀 스타일시트 지원
+- 표지 이미지 지원
+- 메타데이터 설정 (제목, 저자, 언어 등)
 
-- 텍스트 파일을 HTML로 변환
-- 텍스트 파일을 EPUB으로 변환
-- 텍스트 파일을 마크다운 형식으로 변환
-- 자동 목차 생성
-- 자동 표지 이미지 생성
-- 마크다운 스타일의 헤딩 지원
-
-## 요구사항
-
+## 요구 사항
 - Python 3.6 이상
-- Pillow 라이브러리 (표지 이미지 생성용)
-- Calibre (EPUB 변환용)
+- ebooklib
+- beautifulsoup4
 
 ## 설치
-
 ```bash
-# 필요한 Python 라이브러리 설치
-pip install pillow
-
-# Calibre 설치 (macOS)
-brew install calibre
-
-# Calibre 설치 (Windows)
-# https://calibre-ebook.com/download 에서 다운로드 및 설치
+pip install -r requirements.txt
 ```
 
-## 사용법
-
-### 텍스트 파일을 HTML로 변환
-
-```bash
-python txt_to_html.py [입력파일.txt] [출력파일.html]
+## 폴더 구조
+```
+.
+├── resource/                # 리소스 디렉토리
+│   ├── content.md           # 책 내용 (마크다운 형식)
+│   ├── metadata.json        # 책 메타데이터
+│   ├── cover.jpg            # 표지 이미지
+│   └── style.css            # 스타일시트
+├── resource_to_html.py      # 마크다운을 HTML로 변환하는 스크립트
+├── resource_to_epub.py      # 리소스 디렉토리에서 EPUB 생성하는 스크립트
+├── html_to_epub_ebooklib.py # HTML을 EPUB으로 변환하는 스크립트 (ebooklib 사용)
+└── requirements.txt         # 필요한 패키지 목록
 ```
 
-옵션:
-- `--no-toc`: 목차를 생성하지 않습니다.
-- `--css`: 외부 CSS 파일 경로를 지정합니다.
+## 문제 해결
 
-### 텍스트 파일을 EPUB으로 변환
+### 목차(TOC) 링크 문제
+EPUB 파일에서 목차 링크가 작동하지 않는 문제가 있었습니다. 이 문제는 다음과 같은 원인으로 발생했습니다:
 
-```bash
-python convert_txt_to_epub.py [입력파일.txt] [출력파일.epub]
-```
+1. **ID 속성 누락**: HTML 파일의 헤더 요소에 ID 속성이 없어 링크 대상을 찾을 수 없었습니다.
+2. **TOC 구조 문제**: EPUB TOC 구조가 챕터 파일만 가리키고 챕터 내의 헤더를 참조하지 않았습니다.
+3. **파일 확장자 불일치**: HTML 파일과 EPUB 내부 파일의 확장자가 달라 링크가 깨졌습니다.
 
-옵션:
-- `--author`: 책 저자를 지정합니다. (기본값: "변환 스크립트")
-- `--title`: 책 제목을 지정합니다. (기본값: 텍스트 파일의 첫 번째 줄)
+이 문제는 `resource_to_epub.py` 스크립트에서 다음과 같이 해결했습니다:
 
-### 텍스트 파일을 마크다운 형식으로 변환
+1. BeautifulSoup을 사용하여 헤더 요소에 자동으로 ID 속성을 추가합니다.
+2. 챕터 내의 헤더를 찾아 TOC에 추가합니다.
+3. 파일 확장자를 일관되게 유지합니다.
 
-```bash
-python txt_to_markdown.py [입력파일.txt] [출력파일.md]
-```
+### 마크다운 헤딩 변환 문제
+마크다운의 헤딩(`# 제목`)이 HTML의 `<h1>`, `<h2>` 등으로 올바르게 변환되지 않는 문제가 있었습니다. 이 문제는 `resource_to_html.py` 파일의 `process_markdown_content` 함수를 수정하여 해결했습니다.
 
-변환 규칙:
-- 첫 번째 줄은 `# 제목` 형식으로 변환 (책 제목)
-- 짧은 줄(20자 미만)은 `## 제목` 형식으로 변환 (챕터 제목)
-- 더 짧은 줄(10자 미만)은 `### 제목` 형식으로 변환 (소제목)
-- 빈 줄은 그대로 유지
-- 나머지 줄은 그대로 유지
+### 수평선 변환 문제
+마크다운의 수평선(`---`, `___`, `***`)이 HTML의 `<hr />` 태그로 올바르게 변환되지 않는 문제가 있었습니다. 이 문제는 마크다운 처리 함수에 수평선 처리 코드를 추가하여 해결했습니다.
 
-### 일반 텍스트를 마크다운 형식으로 변환 후 EPUB 생성
-
-일반 텍스트 파일을 마크다운 형식으로 변환한 후 EPUB으로 생성하는 방법:
-
-1. 텍스트 파일을 마크다운 형식으로 변환:
-   ```bash
-   python txt_to_markdown.py input.txt input_markdown.txt
-   ```
-
-2. 변환된 마크다운 파일을 EPUB으로 변환:
-   ```bash
-   python convert_txt_to_epub.py input_markdown.txt output.epub --author "저자명" --title "책제목"
-   ```
-
-3. 한 번에 처리하는 방법:
-   ```bash
-   python txt_to_markdown.py input.txt input_markdown.txt && python convert_txt_to_epub.py input_markdown.txt output.epub --author "안데르센" --title "안데르센 동화집"
-   ```
-
-## 변환 규칙
-
-- `# 제목` 형식의 줄은 `<h1>` 태그로 변환됩니다.
-- `## 제목` 형식의 줄은 `<h2>` 태그로 변환됩니다.
-- `### 제목` 형식의 줄은 `<h3>` 태그로 변환됩니다. (이하 동일)
-- 모든 일반 텍스트 줄은 `<p>` 태그로 변환됩니다.
-- 빈 줄은 `<br />` 태그로 변환됩니다.
-- EPUB 변환 시 `# 제목`과 `## 제목` 형식의 줄은 새로운 챕터의 시작으로 처리됩니다.
-
-## 파일 설명
-
-- `txt_to_html.py`: 텍스트 파일을 HTML로 변환합니다.
-- `txt_to_markdown.py`: 텍스트 파일을 마크다운 형식으로 변환합니다.
-- `txt_to_html_for_epub.py`: EPUB 변환을 위한 HTML 파일들을 생성합니다.
-- `create_cover.py`: EPUB 표지 이미지를 생성합니다.
-- `convert_txt_to_epub.py`: 텍스트 파일을 EPUB으로 변환하는 통합 스크립트입니다.
-
-## 예제
-
-```bash
-# 기본 HTML 변환
-python txt_to_html.py input.txt output.html
-
-# 목차 없이 HTML 변환
-python txt_to_html.py input.txt output.html --no-toc
-
-# 텍스트 파일을 마크다운으로 변환
-python txt_to_markdown.py input.txt input_markdown.txt
-
-# EPUB 변환
-python convert_txt_to_epub.py input.txt output.epub --author "안데르센" --title "안데르센 동화집"
-
-# 마크다운 형식의 파일을 EPUB으로 변환
-python convert_txt_to_epub.py input_markdown.txt output.epub --author "안데르센" --title "안데르센 동화집"
-
-# 텍스트 파일을 마크다운으로 변환 후 EPUB 생성 (한 번에)
-python txt_to_markdown.py input.txt input_markdown.txt && python convert_txt_to_epub.py input_markdown.txt output.epub --author "안데르센" --title "안데르센 동화집"
-```
-
-## 입력 파일 예시
-
-```
-# 책 제목
-
-## 첫 번째 장
-
-이것은 첫 번째 장의 내용입니다.
-이 줄은 같은 문단으로 처리됩니다.
-
-이것은 새로운 문단입니다.
-
-### 소제목
-
-소제목 아래의 내용입니다.
-
-# 두 번째 장
-
-이것은 두 번째 장의 내용입니다.
-```
-
-## 라이선스
-
-이 프로젝트는 MIT 라이선스 하에 배포됩니다.
+## 업데이트 내역
+- 2023-03-07: 마크다운 헤딩 태그가 HTML에 올바르게 포함되도록 수정
+- 2023-03-07: EPUB spine에서 nav 항목 제거
+- 2023-03-07: 페이지 구성 개선 (1페이지: 커버 이미지만, 2페이지: 목차)
+- 2023-03-07: txt 파일 관련 코드 제거, resource 디렉토리의 데이터만 사용하도록 변경
+- 2023-03-07: 커스텀 스타일시트 지원 추가
+- 2023-03-07: ebooklib을 사용한 EPUB 생성 기능 추가
+- 2023-03-07: 마크다운 헤딩 및 수평선 변환 문제 해결
 
