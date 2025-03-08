@@ -277,56 +277,60 @@ def create_colophon_html(colophon):
     if "title" in colophon:
         html += f'        <h1>{colophon["title"]}</h1>\n'
 
+    # 테이블 형식으로 판권 정보 표시
+    html += '        <table class="colophon-table">\n'
+
     # 초판 발행일
     if "first_published" in colophon:
-        html += f'        <p><span class="label">초판 발행</span> {colophon["first_published"]}</p>\n'
+        html += f'            <tr><th align="left">초판 발행</th><td align="left">{colophon["first_published"]}</td></tr>\n'
 
     # 저자
     if "author" in colophon:
-        html += (
-            f'        <p><span class="label">지은이</span> {colophon["author"]}</p>\n'
-        )
+        html += f'            <tr><th align="left">지은이</th><td align="left">{colophon["author"]}</td></tr>\n'
 
     # 번역자
     if "translator" in colophon:
-        html += f'        <p><span class="label">옮긴이</span> {colophon["translator"]}</p>\n'
+        html += f'            <tr><th align="left">옮긴이</th><td align="left">{colophon["translator"]}</td></tr>\n'
 
     # 발행인
     if "publisher" in colophon and "editor" in colophon["publisher"]:
-        html += f'        <p><span class="label">발행인</span> {colophon["publisher"]["editor"]}</p>\n'
+        html += f'            <tr><th align="left">발행인</th><td align="left">{colophon["publisher"]["editor"]}</td></tr>\n'
 
     # 출판사
     if "publisher" in colophon and "name" in colophon["publisher"]:
-        html += f'        <p><span class="label">발행처</span> {colophon["publisher"]["name"]}</p>\n'
+        html += f'            <tr><th align="left">발행처</th><td align="left">{colophon["publisher"]["name"]}</td></tr>\n'
 
     # 출판 등록 정보
     if "publication_registration" in colophon:
         reg = colophon["publication_registration"]
         if "date" in reg and "number" in reg:
-            html += f'        <p><span class="label">출판등록</span> {reg["date"]} {reg["number"]}</p>\n'
+            html += f'            <tr><th align="left">출판등록</th><td align="left">{reg["date"]} {reg["number"]}</td></tr>\n'
 
     # 주소
     if "address" in colophon and "street" in colophon["address"]:
-        html += f'        <p><span class="label">주소</span> {colophon["address"]["street"]}</p>\n'
+        html += f'            <tr><th align="left">주소</th><td align="left">{colophon["address"]["street"]}</td></tr>\n'
 
     # 연락처
     if "contact" in colophon:
         contact = colophon["contact"]
-        email = contact["email"]
-        fax = contact["fax"]
-        html += f'        <p><span class="label">문의</span> {email}</p>\n'
-        html += f'        <p><span class="label">팩스</span> {fax}</p>\n'
+        if "email" in contact:
+            html += f'            <tr><th align="left">문의</th><td align="left">{contact["email"]}</td></tr>\n'
+        if "fax" in contact:
+            html += f'            <tr><th align="left">팩스</th><td align="left">{contact["fax"]}</td></tr>\n'
 
     # ISBN
     if "isbn" in colophon:
-        html += f'        <p><span class="label">ISBN</span> {colophon["isbn"]}</p>\n'
+        html += f'            <tr><th align="left">ISBN</th><td align="left">{colophon["isbn"]}</td></tr>\n'
 
     # 가격
     if "price" in colophon:
-        html += f'        <p><span class="label">정가</span> {colophon["price"]}</p>\n'
+        html += f'            <tr><th align="left">정가</th><td align="left">{colophon["price"]}</td></tr>\n'
+
+    html += "        </table>\n"
+
     # 저작권 고지
     if "copyright_notice" in colophon:
-        html += f'        <p>{colophon["copyright_notice"]}</p>\n'
+        html += f'        <p class="copyright">{colophon["copyright_notice"]}</p>\n'
 
     html += "    </div>\n"
     html += "</body>\n"
